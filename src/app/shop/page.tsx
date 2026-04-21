@@ -3,9 +3,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { useApp } from "@/context/AppContext";
 
 type Product = {
   id: string; name: string; price: number;
@@ -18,17 +19,31 @@ const BADGE_COLORS: Record<string, string> = {
   "Limited": "bg-white text-black",
 };
 
-function ShopPageInner() {
-  const searchParams = useSearchParams();
-  const initialCategory = searchParams.get("category") || "Le Catalogue";
+// Internal filter keys always use the French brand names to match DB values
+const CATEGORY_KEYS = ["Le Catalogue", "La Femme", "L'Homme", "L'Enfant", "L'Atelier"] as const;
+type CategoryKey = typeof CATEGORY_KEYS[number];
 
-  const [filter, setFilter] = useState(initialCategory);
+function ShopPageInner() {
+  const { t } = useApp();
+  const tShop = t.shop as Record<string, string>;
+  const searchParams = useSearchParams();
+  const initialCategory = (searchParams.get("category") as CategoryKey) || "Le Catalogue";
+
+  const [filter, setFilter] = useState<CategoryKey>(initialCategory);
   const [priceSort, setPriceSort] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
-  const categories = ["Le Catalogue", "La Femme", "L'Homme", "L'Enfant", "L'Atelier"];
+
+  // Map DB keys to translated display labels
+  const categoryLabels: Record<CategoryKey, string> = {
+    "Le Catalogue": tShop.catAll,
+    "La Femme": tShop.catWomen,
+    "L'Homme": tShop.catMen,
+    "L'Enfant": tShop.catChildren,
+    "L'Atelier": tShop.catAtelier,
+  };
 
   // Fetch products from API
   useEffect(() => {
@@ -78,7 +93,7 @@ function ShopPageInner() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="text-[9px] tracking-[0.5em] uppercase text-gold mb-4"
           >
-            {filter === "Le Catalogue" ? "Digital Runway" : filter}
+            {filter === "Le Catalogue" ? "Digital Runway" : categoryLabels[filter]}
           </motion.p>
           <motion.h1
             key={`title-${filter}`}
@@ -87,7 +102,7 @@ function ShopPageInner() {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="font-serif text-5xl md:text-7xl text-white leading-none"
           >
-            {filter === "Le Catalogue" ? "Spring / Summer '26" : filter}
+            {filter === "Le Catalogue" ? "Spring / Summer '26" : categoryLabels[filter]}
           </motion.h1>
           <motion.p
             key={`count-${filter}`}
@@ -110,17 +125,17 @@ function ShopPageInner() {
         >
           {/* Category filters */}
           <div className="flex flex-wrap gap-0 text-[10px] tracking-[0.2em] font-medium uppercase">
-            {categories.map(c => (
+            {CATEGORY_KEYS.map(key => (
               <button
-                key={c}
-                onClick={() => setFilter(c)}
+                key={key}
+                onClick={() => setFilter(key)}
                 className={`px-5 py-2 transition-all duration-300 relative border-b-2 ${
-                  filter === c
+                  filter === key
                     ? "text-black border-black"
                     : "text-gray-400 hover:text-black border-transparent hover:border-gray-300"
                 }`}
               >
-                {c}
+                {categoryLabels[key]}
               </button>
             ))}
           </div>
@@ -162,7 +177,7 @@ function ShopPageInner() {
       {/* Collections Banner (shown on full catalogue) */}
       {filter === "Le Catalogue" && (
         <div className="px-8 md:px-16 pt-16 pb-8 max-w-[1600px] mx-auto">
-          <p className="text-[9px] tracking-[0.5em] uppercase text-gold mb-8">Collections</p>
+          <p className="text-[9px] tracking-[0.5em] uppercase text-gold mb-8">{tShop.catAll}</p>
           <div className="grid grid-cols-2 gap-4 mb-16">
             {[
               { id: "ss26", name: "Spring / Summer '26", desc: "Fluid forms and natural textures", image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1400&auto=format&fit=crop" },
@@ -225,7 +240,7 @@ function ShopPageInner() {
                         {/* Quick actions */}
                         <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 transition-all duration-500 flex gap-2">
                           <span className="flex-1 bg-white/90 backdrop-blur text-black text-[8px] tracking-[0.2em] uppercase py-2 text-center shadow-lg">
-                            {product.category === "La Femme" ? "👩 La Femme" : product.category === "L'Homme" ? "👨 L'Homme" : product.category === "L'Enfant" ? "🧒 L'Enfant" : "✦ L'Atelier"}
+                            {categoryLabels[product.category as CategoryKey] ?? product.category}
                           </span>
                           <Link
                             href={`/try-on?product=${product.id}`}
@@ -255,7 +270,7 @@ function ShopPageInner() {
                       </div>
                       <div className="flex flex-col justify-between py-1">
                         <div>
-                          <p className="text-[8px] tracking-[0.3em] text-gold uppercase mb-1">{product.category}</p>
+                          <p className="text-[8px] tracking-[0.3em] text-gold uppercase mb-1">{categoryLabels[product.category as CategoryKey] ?? product.category}</p>
                           <h2 className="font-serif text-xl mb-2 group-hover:text-gold transition-colors">{product.name}</h2>
                           <p className="font-sans text-2xl text-gray-400">${product.price.toLocaleString()}</p>
                         </div>
@@ -284,7 +299,7 @@ function ShopPageInner() {
           <div className="text-center py-32">
             <p className="font-serif text-3xl text-gray-300 mb-4">No pieces found</p>
             <button onClick={() => setFilter("Le Catalogue")} className="text-[10px] tracking-[0.3em] uppercase text-gold border-b border-gold pb-0.5">
-              View All Collection
+              {tShop.catAll}
             </button>
           </div>
         )}

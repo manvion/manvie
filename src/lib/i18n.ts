@@ -55,6 +55,11 @@ export const translations = {
       all: "All",
       catalogue: "The Catalogue",
       shopCollection: "Shop Collection →",
+      catAll: "The Catalogue",
+      catWomen: "Women",
+      catMen: "Men",
+      catChildren: "Children",
+      catAtelier: "Atelier",
     },
     product: {
       addToBag: "Add to Bag",
@@ -271,6 +276,11 @@ export const translations = {
       all: "Tout",
       catalogue: "Le Catalogue",
       shopCollection: "Voir la Collection →",
+      catAll: "Le Catalogue",
+      catWomen: "La Femme",
+      catMen: "L'Homme",
+      catChildren: "L'Enfant",
+      catAtelier: "L'Atelier",
     },
     product: {
       addToBag: "Ajouter au Sac",
