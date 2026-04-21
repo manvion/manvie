@@ -16,11 +16,11 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://manvie.com";
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: "MANVIÉ | Haute Couture Québécoise · Est. 1942",
+    default: "MANVIÉ | Haute Couture Québécoise — Montréal",
     template: "%s | MANVIÉ",
   },
   description:
-    "Maison Manvié — Une maison de mode de luxe québécoise fondée à Montréal en 1942. Haute couture artisanale, essayage virtuel IA et styliste personnel. Québécois luxury fashion house founded in Montréal.",
+    "Maison Manvié — Une maison de mode de luxe québécoise, Montréal. Haute couture artisanale, essayage virtuel IA et styliste personnel. Québécois luxury fashion house from Montréal.",
   keywords: [
     "luxury fashion", "haute couture", "Québec fashion", "Montréal fashion",
     "mode québécoise", "couture québécoise", "AI stylist", "virtual try-on",
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "MANVIÉ | Haute Couture Québécoise",
-    description: "Québécois luxury fashion house, Est. 1942 Montréal.",
+    description: "Québécois luxury fashion house, Montréal.",
     images: ["/og-image.jpg"],
   },
   icons: {
@@ -85,8 +85,7 @@ const jsonLd = {
   alternateName: "MANVIÉ",
   url: BASE_URL,
   logo: `${BASE_URL}/favicon.svg`,
-  description: "Québécois luxury fashion house founded in Montréal, 1942.",
-  foundingDate: "1942",
+  description: "Québécois luxury fashion house from Montréal.",
   address: {
     "@type": "PostalAddress",
     addressLocality: "Montréal",

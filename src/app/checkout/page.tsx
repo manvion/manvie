@@ -18,7 +18,6 @@ interface ShippingDetails {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
   address: string;
   apt: string;
   city: string;
@@ -190,8 +189,8 @@ export default function CheckoutPage() {
   const [orderNumber] = useState(() => `M-${Math.floor(80000 + Math.random() * 19999)}-FX`);
 
   const [shipping, setShipping] = useState<ShippingDetails>({
-    firstName: "", lastName: "", email: "", phone: "",
-    address: "", apt: "", city: "", state: "", zip: "", country: "France"
+    firstName: "", lastName: "", email: "",
+    address: "", apt: "", city: "", state: "", zip: "", country: "Canada"
   });
 
   const [card, setCard] = useState<CardDetails>({
@@ -386,7 +385,6 @@ export default function CheckoutPage() {
                     <LuxInput label="First Name" value={shipping.firstName} onChange={setS("firstName")} />
                     <LuxInput label="Last Name" value={shipping.lastName} onChange={setS("lastName")} />
                     <LuxInput label="Email Address" type="email" value={shipping.email} onChange={setS("email")} className="col-span-2" />
-                    <LuxInput label="Phone Number" type="tel" value={shipping.phone} onChange={setS("phone")} className="col-span-2" />
                     <LuxInput label="Street Address" value={shipping.address} onChange={setS("address")} className="col-span-2" />
                     <LuxInput label="Apt / Suite (optional)" value={shipping.apt} onChange={setS("apt")} className="col-span-2" />
                     <LuxInput label="City" value={shipping.city} onChange={setS("city")} />

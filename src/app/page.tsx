@@ -226,9 +226,9 @@ function ManifestoSection() {
           <div className="w-16 h-[1px] bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mb-16" />
           <div className="grid grid-cols-3 gap-16 max-w-3xl mx-auto text-center">
             {[
-              { num: "1942", label: "Founded" },
               { num: "47", label: "Master Artisans" },
-              { num: "180+", label: "Countries Served" }
+              { num: "180+", label: "Countries Served" },
+              { num: "100%", label: "Made in Québec" },
             ].map(({ num, label }) => (
               <div key={label}>
                 <p className="font-serif text-4xl text-gold mb-2">{num}</p>
@@ -497,10 +497,10 @@ function BrandStorySection() {
             className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/30" />
-          {/* Year stamp */}
+          {/* Location stamp */}
           <div className="absolute top-12 left-12">
-            <p className="text-[8px] tracking-[0.4em] text-white/50 uppercase">Est.</p>
-            <p className="font-serif text-5xl text-white/30">1942</p>
+            <p className="text-[8px] tracking-[0.4em] text-white/50 uppercase">Maison</p>
+            <p className="font-serif text-3xl text-white/30">Montréal</p>
           </div>
         </motion.div>
 
@@ -518,7 +518,7 @@ function BrandStorySection() {
               <span className="text-gold/70 italic">Elevated</span> by Intelligence.
             </h2>
             <p className="text-gray-400 leading-relaxed mb-6 text-sm max-w-lg">
-              Founded in 1942 by Maison Manvié, our house has spent eight decades perfecting the art of Québécois couture. In 2020, we became the first luxury house to integrate generative AI into every step of the creative process.
+              Maison Manvié was born in Montréal, Québec — where master craftsmanship meets the uncompromising spirit of the north. We became the first luxury house to integrate generative AI into every step of the creative process.
             </p>
             <p className="text-gray-500 leading-relaxed mb-12 text-sm max-w-lg">
               Each piece is still cut by hand in our Montréal atelier. The difference is that now, you can try it on from anywhere in the world.

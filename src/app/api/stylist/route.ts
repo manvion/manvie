@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
-        { role: "system", content: "You are a luxury fashion stylist for the Paris house MANVIÉ. Return your recommendations strictly in JSON format matching this schema: { \"explanation\": \"...\", \"items\": [ { \"name\": \"...\", \"type\": \"...\", \"price\": \"...\" } ] }" },
+        { role: "system", content: "You are a luxury fashion stylist for the Montréal house MANVIÉ. Return your recommendations strictly in JSON format matching this schema: { \"explanation\": \"...\", \"items\": [ { \"name\": \"...\", \"type\": \"...\", \"price\": \"...\" } ] }" },
         { role: "user", content: `Suggest an outfit for ${occasion} with ${style} style under ${budget}. Return ONLY JSON.` }
       ],
     });

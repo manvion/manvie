@@ -112,6 +112,35 @@ export default function Navigation() {
               {t.nav.tryon}
             </Link>
 
+            {/* AI Stylist (desktop) */}
+            <Link
+              href="/stylist"
+              className={`text-[10px] tracking-[0.3em] uppercase transition-colors duration-300 hidden md:flex items-center gap-2 ${
+                scrolled
+                  ? "text-black dark:text-white hover:text-gold"
+                  : "text-white/80 hover:text-white"
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-gold/60 animate-pulse" />
+              {t.nav.stylist}
+            </Link>
+
+            {/* Account (desktop) */}
+            <Link
+              href="/account"
+              className={`text-[10px] tracking-[0.3em] uppercase transition-colors duration-300 hidden md:flex items-center gap-1.5 ${
+                scrolled
+                  ? "text-black dark:text-white hover:text-gold"
+                  : "text-white/80 hover:text-white"
+              }`}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+              </svg>
+              {t.nav.account}
+            </Link>
+
             {/* Language Toggle */}
             <button
               onClick={() => setLang(lang === "en" ? "fr" : "en")}
@@ -314,6 +343,7 @@ export default function Navigation() {
                 { label: t.nav.shop, href: "/shop" },
                 { label: t.nav.tryon, href: "/try-on" },
                 { label: t.nav.stylist, href: "/stylist" },
+                { label: t.nav.account, href: "/account" },
                 { label: t.nav.cart + (count > 0 ? ` (${count})` : ""), href: "/cart" },
               ].map(({ label, href }) => (
                 <Link

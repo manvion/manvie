@@ -106,7 +106,7 @@ export default function Footer() {
               </h2>
             </Link>
             <p className="text-gray-600 text-sm leading-relaxed mb-8 max-w-xs">
-              A Parisian luxury fashion house, reimagined through the lens of artificial intelligence. Est. 1942.
+              A Québécois luxury fashion house, reimagined through the lens of artificial intelligence.
             </p>
 
             {/* Social links */}
@@ -181,13 +181,12 @@ export default function Footer() {
             <p className="text-[8px] tracking-[0.4em] uppercase text-gold mb-6">Contact</p>
             <div className="space-y-4 text-sm text-gray-500">
               <div>
-                <p className="text-[8px] tracking-[0.3em] uppercase text-gray-700 mb-1">Paris Flagship</p>
-                <p>25 Rue du Faubourg Saint-Honoré</p>
-                <p>75008 Paris, France</p>
+                <p className="text-[8px] tracking-[0.3em] uppercase text-gray-700 mb-1">Maison Manvié</p>
+                <p>Montréal, Québec</p>
+                <p>Canada</p>
               </div>
               <div>
                 <p className="text-[8px] tracking-[0.3em] uppercase text-gray-700 mb-1">Concierge</p>
-                <p className="hover:text-white transition-colors cursor-pointer">+33 1 42 68 XX XX</p>
                 <p className="hover:text-white transition-colors cursor-pointer">maison@manvie.com</p>
               </div>
               <div>

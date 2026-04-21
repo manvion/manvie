@@ -28,14 +28,19 @@ function AccountPageInner() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [user, setUser] = useState<{ email?: string; id: string } | null>(null);
+  const [supabaseReady, setSupabaseReady] = useState(true);
 
   const tAccount = t.account as Record<string, string>;
 
   // Check current session
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) setUser({ id: data.user.id, email: data.user.email });
-    });
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setSupabaseReady(false);
+      return;
+    }
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (!error && data.user) setUser({ id: data.user.id, email: data.user.email });
+    }).catch(() => setSupabaseReady(false));
   }, []);
 
   // Show error from URL (e.g. OAuth failure)
@@ -94,6 +99,7 @@ function AccountPageInner() {
   };
 
   const handleGoogleOAuth = async () => {
+    if (!supabaseReady) return;
     setGoogleLoading(true);
     await supabase.auth.signInWithOAuth({
       provider: "google",
