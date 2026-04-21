@@ -17,7 +17,6 @@ function verifyToken(token: string): boolean {
     if (sigBuf.length !== expBuf.length) return false;
     if (!crypto.timingSafeEqual(sigBuf, expBuf)) return false;
     const payload = JSON.parse(Buffer.from(b64, "base64url").toString());
-    // Token expires after 24h
     if (Date.now() - payload.iat > 86400000) return false;
     return true;
   } catch {
@@ -25,10 +24,13 @@ function verifyToken(token: string): boolean {
   }
 }
 
+// Public supplier paths that don't require a session
+const SUPPLIER_PUBLIC = ["/supplier/login", "/supplier/register"];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ── Protect /admin (except /admin/login) ────────────────────────────────
+  // ── Protect /admin (except /admin/login) ──────────────────────────────────
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
     const token = request.cookies.get("manvie-admin")?.value;
     if (!token || !verifyToken(token)) {
@@ -38,9 +40,12 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // ── Protect /supplier (except /supplier/login) ───────────────────────────
-  if (pathname.startsWith("/supplier") && !pathname.startsWith("/supplier/login")) {
-    const token = request.cookies.get("manvie-merchant")?.value;
+  // ── Protect /supplier (except login + register) ───────────────────────────
+  if (
+    pathname.startsWith("/supplier") &&
+    !SUPPLIER_PUBLIC.some((p) => pathname.startsWith(p))
+  ) {
+    const token = request.cookies.get("manvie-supplier")?.value;
     if (!token || !verifyToken(token)) {
       const url = new URL("/supplier/login", request.url);
       url.searchParams.set("from", pathname);

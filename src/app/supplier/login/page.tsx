@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
-export default function MerchantLogin() {
+export default function SupplierLogin() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ export default function MerchantLogin() {
       const res = await fetch("/api/auth/merchant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -63,34 +63,33 @@ export default function MerchantLogin() {
             <Link href="/" className="inline-block">
               <p className="text-[9px] tracking-[0.6em] text-gold uppercase mb-2">Manvié</p>
               <h1 className="font-serif text-3xl text-white">Supplier Portal</h1>
-              <p className="font-serif text-3xl text-white/30 italic text-xl">Portail Fournisseur</p>
             </Link>
             <div className="w-12 h-[1px] bg-gold/40 mx-auto mt-4" />
           </div>
 
           {/* Form */}
           <div className="bg-black/60 border border-white/10 backdrop-blur-xl p-10">
-            <p className="text-[9px] tracking-[0.4em] text-gold/70 uppercase mb-8">Merchant Access · Accès Marchand</p>
+            <p className="text-[9px] tracking-[0.4em] text-gold/70 uppercase mb-8">Merchant Access</p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-[9px] uppercase tracking-[0.25em] text-white/40 mb-2">
-                  Username / Nom d'utilisateur
+                  Email Address
                 </label>
                 <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="username"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
                   required
                   className="w-full bg-transparent border-b border-white/20 focus:border-gold pb-2 outline-none text-sm text-white transition-colors placeholder:text-white/20"
-                  placeholder="merchant"
+                  placeholder="you@yourcompany.com"
                 />
               </div>
 
               <div>
                 <label className="block text-[9px] uppercase tracking-[0.25em] text-white/40 mb-2">
-                  Password / Mot de passe
+                  Password
                 </label>
                 <div className="relative">
                   <input
@@ -139,7 +138,7 @@ export default function MerchantLogin() {
                     Verifying...
                   </span>
                 ) : (
-                  "Sign In · Se Connecter"
+                  "Sign In"
                 )}
               </motion.button>
             </form>
@@ -148,12 +147,14 @@ export default function MerchantLogin() {
               <Link href="/" className="text-[9px] tracking-[0.2em] uppercase text-white/30 hover:text-white/60 transition-colors">
                 ← Back to Site
               </Link>
-              <p className="text-[8px] text-white/20 uppercase tracking-widest">Secure Portal</p>
+              <Link href="/supplier/register" className="text-[9px] tracking-[0.2em] uppercase text-gold/60 hover:text-gold transition-colors">
+                Apply as supplier →
+              </Link>
             </div>
           </div>
 
           <p className="text-center text-[8px] tracking-[0.2em] text-white/20 uppercase mt-6">
-            🔒 Encrypted · Session 24h
+            🔒 256-bit Encrypted · Session 24h
           </p>
         </motion.div>
       </div>

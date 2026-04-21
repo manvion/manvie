@@ -7,52 +7,10 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
-const ALL_PRODUCTS = [
-  // La Femme
-  { id: "1", name: "Signature Cashmere Coat", price: 2400, image: "https://images.unsplash.com/photo-1544022613-e87ca75a784a?q=80&w=800&auto=format&fit=crop", category: "La Femme", badge: "Bestseller" },
-  { id: "2", name: "Atelier Silk Dress", price: 1850, image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800&auto=format&fit=crop", category: "La Femme", badge: "New" },
-  { id: "5", name: "Noir Evening Gown", price: 4200, image: "https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=800&auto=format&fit=crop", category: "La Femme", badge: "Limited" },
-  { id: "11", name: "Ivory Wrap Dress", price: 1650, image: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?q=80&w=800&auto=format&fit=crop", category: "La Femme", badge: null },
-  { id: "12", name: "Organza Blouse", price: 890, image: "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?q=80&w=800&auto=format&fit=crop", category: "La Femme", badge: "New" },
-  { id: "13", name: "High-Waist Trousers", price: 1100, image: "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?q=80&w=800&auto=format&fit=crop", category: "La Femme", badge: null },
-
-  // L'Homme
-  { id: "3", name: "Classic Wool Blazer", price: 1500, image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=800&auto=format&fit=crop", category: "L'Homme", badge: "Bestseller" },
-  { id: "6", name: "Heritage Trench Coat", price: 2800, image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=800&auto=format&fit=crop", category: "L'Homme", badge: "New" },
-  { id: "7", name: "Velvet Smoking Jacket", price: 1950, image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=800&auto=format&fit=crop", category: "L'Homme", badge: "Limited" },
-  { id: "14", name: "Tailored Suit", price: 3400, image: "https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?q=80&w=800&auto=format&fit=crop", category: "L'Homme", badge: "New" },
-  { id: "15", name: "Cashmere Turtleneck", price: 650, image: "https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=800&auto=format&fit=crop", category: "L'Homme", badge: null },
-  { id: "16", name: "Merino Wool Coat", price: 2100, image: "https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=800&auto=format&fit=crop", category: "L'Homme", badge: null },
-
-  // L'Enfant
-  { id: "9", name: "Miniature Cashmere Wrap", price: 650, image: "https://images.unsplash.com/photo-1519689680058-324335c77eba?q=80&w=800&auto=format&fit=crop", category: "L'Enfant", badge: "New" },
-  { id: "10", name: "Petit Wool Pea Coat", price: 890, image: "https://images.unsplash.com/photo-1522771930-78848d92871d?q=80&w=800&auto=format&fit=crop", category: "L'Enfant", badge: null },
-  { id: "17", name: "Silk Party Dress", price: 580, image: "https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?q=80&w=800&auto=format&fit=crop", category: "L'Enfant", badge: "Limited" },
-  { id: "18", name: "Velvet Pageboy Suit", price: 720, image: "https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?q=80&w=800&auto=format&fit=crop", category: "L'Enfant", badge: null },
-
-  // L'Atelier
-  { id: "4", name: "Italian Leather Handbag", price: 3200, image: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=800&auto=format&fit=crop", category: "L'Atelier", badge: "Bestseller" },
-  { id: "8", name: "18k Gold Chain Necklace", price: 850, image: "https://images.unsplash.com/photo-1515562141589-67f0d727b750?q=80&w=800&auto=format&fit=crop", category: "L'Atelier", badge: "New" },
-  { id: "19", name: "Silk Scarf", price: 420, image: "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?q=80&w=800&auto=format&fit=crop", category: "L'Atelier", badge: null },
-  { id: "20", name: "Leather Card Holder", price: 380, image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=800&auto=format&fit=crop", category: "L'Atelier", badge: null },
-  { id: "21", name: "Diamond Stud Earrings", price: 2200, image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=800&auto=format&fit=crop", category: "L'Atelier", badge: "Limited" },
-  { id: "22", name: "Suede Belt", price: 490, image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=800&auto=format&fit=crop", category: "L'Atelier", badge: null },
-];
-
-const COLLECTIONS = [
-  {
-    id: "ss26",
-    name: "Spring / Summer '26",
-    desc: "Fluid forms and natural textures",
-    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1400&auto=format&fit=crop"
-  },
-  {
-    id: "fw25",
-    name: "Fall / Winter '25",
-    desc: "Architectural silhouettes",
-    image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1400&auto=format&fit=crop"
-  }
-];
+type Product = {
+  id: string; name: string; price: number;
+  image_url: string; category: string; badge: string | null;
+};
 
 const BADGE_COLORS: Record<string, string> = {
   "Bestseller": "bg-black text-white",
@@ -68,9 +26,19 @@ function ShopPageInner() {
   const [priceSort, setPriceSort] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const categories = ["Le Catalogue", "La Femme", "L'Homme", "L'Enfant", "L'Atelier"];
 
-  let filtered = ALL_PRODUCTS.filter(p => filter === "Le Catalogue" || p.category === filter);
+  // Fetch products from API
+  useEffect(() => {
+    fetch("/api/products")
+      .then(r => r.json())
+      .then(data => setAllProducts(data.products ?? []))
+      .finally(() => setLoadingProducts(false));
+  }, []);
+
+  let filtered = allProducts.filter(p => filter === "Le Catalogue" || p.category === filter);
   if (priceSort === "low") filtered = [...filtered].sort((a, b) => a.price - b.price);
   if (priceSort === "high") filtered = [...filtered].sort((a, b) => b.price - a.price);
 
@@ -128,7 +96,7 @@ function ShopPageInner() {
             transition={{ duration: 0.6, delay: 0.8 }}
             className="text-[10px] tracking-[0.3em] text-white/40 uppercase mt-4"
           >
-            {filtered.length} Pieces
+            {loadingProducts ? "Loading..." : `${filtered.length} Pieces`}
           </motion.p>
         </div>
       </div>
@@ -196,7 +164,10 @@ function ShopPageInner() {
         <div className="px-8 md:px-16 pt-16 pb-8 max-w-[1600px] mx-auto">
           <p className="text-[9px] tracking-[0.5em] uppercase text-gold mb-8">Collections</p>
           <div className="grid grid-cols-2 gap-4 mb-16">
-            {COLLECTIONS.map((col) => (
+            {[
+              { id: "ss26", name: "Spring / Summer '26", desc: "Fluid forms and natural textures", image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1400&auto=format&fit=crop" },
+              { id: "fw25", name: "Fall / Winter '25", desc: "Architectural silhouettes", image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1400&auto=format&fit=crop" },
+            ].map((col) => (
               <div key={col.id} className="relative h-48 overflow-hidden group cursor-pointer">
                 <Image src={col.image} alt={col.name} fill className="object-cover transition-transform duration-[2s] group-hover:scale-105" />
                 <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition-colors duration-700" />
@@ -238,7 +209,7 @@ function ShopPageInner() {
                     <>
                       <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-5">
                         <Image
-                          src={product.image}
+                          src={product.image_url}
                           alt={product.name}
                           fill
                           className="object-cover transition-transform duration-[2s] ease-[0.16,1,0.3,1] group-hover:scale-[1.05]"
@@ -275,7 +246,7 @@ function ShopPageInner() {
                   ) : (
                     <div className="flex gap-6 border-b border-gray-100 pb-8 group-hover:border-gray-300 transition-colors">
                       <div className="relative w-32 h-40 overflow-hidden bg-gray-100 shrink-0">
-                        <Image src={product.image} alt={product.name} fill className="object-cover transition-transform duration-1000 group-hover:scale-105" />
+                        <Image src={product.image_url} alt={product.name} fill className="object-cover transition-transform duration-1000 group-hover:scale-105" />
                         {product.badge && (
                           <div className={`absolute top-2 left-2 text-[7px] tracking-[0.2em] uppercase px-2 py-1 ${BADGE_COLORS[product.badge]}`}>
                             {product.badge}

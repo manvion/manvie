@@ -120,7 +120,7 @@ export default function Navigation() {
                   ? "border-gray-200 dark:border-white/20 text-black dark:text-white hover:border-gold hover:text-gold"
                   : "border-white/30 text-white/70 hover:border-white hover:text-white"
               }`}
-              title={lang === "en" ? "Passer au français" : "Switch to English"}
+              title={t.nav.switchLang}
             >
               {t.nav.lang}
             </button>

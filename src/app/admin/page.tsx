@@ -1,47 +1,30 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-const METRICS = [
-  { label: "Gross Revenue",     value: "$128,400", change: "+12.5%",        trend: "up",      sub: "vs last 30 days" },
-  { label: "Fulfillment Queue", value: "23",        change: "8 Prioritized", trend: "neutral", sub: "units pending dispatch" },
-  { label: "Supplier Approvals",value: "2",         change: "Action Required",trend: "warn",   sub: "pending review" },
-  { label: "Active Partners",   value: "6",         change: "Stable",        trend: "up",      sub: "across 4 regions" },
-  { label: "Avg. Order Value",  value: "$3,842",    change: "+8.1%",         trend: "up",      sub: "vs last 30 days" },
-  { label: "Return Rate",       value: "1.2%",      change: "-0.4%",         trend: "up",      sub: "below industry avg." },
-];
-
-const INITIAL_PRODUCTS = [
-  { id: 1, name: "Manvié Signature Coat",  supplier: "Atelier Blanc", sku: "MB-001", cost: 450, retail: 2400, stock: 12, status: "active",  sales: 48 },
-  { id: 2, name: "Atelier Silk Dress",     supplier: "Maison Rouge",  sku: "MB-002", cost: 320, retail: 1850, stock: 8,  status: "active",  sales: 31 },
-  { id: 3, name: "Noir Evening Gown",      supplier: "Studio Noir",   sku: "MB-003", cost: 680, retail: 4200, stock: 4,  status: "active",  sales: 17 },
-  { id: 4, name: "Wool Blend Trench",      supplier: "Atelier Blanc", sku: "MB-004", cost: 380, retail: null, stock: 20, status: "pending", sales: 0  },
-  { id: 5, name: "Cashmere Wrap Coat",     supplier: "Studio Noir",   sku: "MB-005", cost: 520, retail: null, stock: 5,  status: "pending", sales: 0  },
-  { id: 6, name: "Italian Leather Bag",    supplier: "Maison Rouge",  sku: "MB-006", cost: 680, retail: 3200, stock: 6,  status: "active",  sales: 22 },
-];
-
-const INITIAL_ORDERS = [
-  { id: "ORD-4825", customer: "Isabelle Fontaine", email: "i.fontaine@example.com", total: 4250, status: "processing", supplier: "Atelier Blanc", items: 1, date: "Apr 20, 2026" },
-  { id: "ORD-4824", customer: "Marcus Webb",        email: "m.webb@example.com",     total: 1850, status: "shipped",     supplier: "Maison Rouge",  items: 1, date: "Apr 19, 2026" },
-  { id: "ORD-4823", customer: "Yuki Tanaka",        email: "y.tanaka@example.com",   total: 6400, status: "delivered",   supplier: "Atelier Blanc", items: 2, date: "Apr 18, 2026" },
-  { id: "ORD-4822", customer: "Camille Dubois",     email: "c.dubois@example.com",   total: 3200, status: "processing",  supplier: "Studio Noir",   items: 1, date: "Apr 18, 2026" },
-  { id: "ORD-4821", customer: "Ahmad Al-Rashid",    email: "a.alrashid@example.com", total: 2800, status: "shipped",     supplier: "Atelier Blanc", items: 1, date: "Apr 17, 2026" },
-];
-
-const INITIAL_SUPPLIERS = [
-  { id: 1, name: "Atelier Blanc", location: "Montréal, QC", speciality: "Outerwear & Coats",     status: "active",  products: 3, revenue: 68400, rating: 4.9 },
-  { id: 2, name: "Maison Rouge",  location: "Milan, IT",    speciality: "Dresses & Gowns",       status: "active",  products: 2, revenue: 41200, rating: 4.8 },
-  { id: 3, name: "Studio Noir",   location: "London, UK",   speciality: "Accessories & Leather", status: "active",  products: 2, revenue: 18800, rating: 4.7 },
-  { id: 4, name: "Casa Velvet",   location: "Barcelona, ES",speciality: "Evening Wear",          status: "pending", products: 0, revenue: 0,     rating: null },
-];
+type Product = {
+  id: string; name: string; supplier_name: string; sku: string;
+  base_cost: number; price: number | null; stock: number;
+  status: string; sales_count: number;
+};
+type Order = {
+  id: string; order_number: string; customer_name: string;
+  customer_email: string; total: number; status: string;
+  supplier_name: string; items: unknown; created_at: string;
+};
+type Supplier = {
+  id: string; company_name: string; location: string; country: string;
+  specialty: string; status: string; products_count: number;
+  total_revenue: number; rating: number | null;
+};
+type Metric = { label: string; value: string; change: string; trend: string; sub: string };
 
 const ORDER_FLOW: Record<string, string> = {
   processing: "shipped",
   shipped: "delivered",
-  delivered: "delivered",
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -88,11 +71,11 @@ function SparkBar({ value, max }: { value: number; max: number }) {
 // ─── Edit Product Modal ───────────────────────────────────────────────────────
 
 function EditProductModal({ product, onSave, onClose }: {
-  product: typeof INITIAL_PRODUCTS[0];
-  onSave: (id: number, retail: number, stock: number) => void;
+  product: Product;
+  onSave: (id: string, price: number, stock: number) => void;
   onClose: () => void;
 }) {
-  const [retail, setRetail] = useState(product.retail?.toString() ?? "");
+  const [retail, setRetail] = useState(product.price?.toString() ?? "");
   const [stock, setStock] = useState(product.stock.toString());
 
   return (
@@ -123,7 +106,7 @@ function EditProductModal({ product, onSave, onClose }: {
         </div>
 
         <div className="flex gap-3 mt-8">
-          <button onClick={() => { onSave(product.id, parseInt(retail), parseInt(stock)); onClose(); }}
+          <button onClick={() => { onSave(product.id, parseFloat(retail), parseInt(stock)); onClose(); }}
             className="flex-1 bg-gold text-black py-3.5 text-[10px] tracking-[0.3em] uppercase hover:bg-white transition-colors">
             Save Changes
           </button>
@@ -141,46 +124,82 @@ function EditProductModal({ product, onSave, onClose }: {
 export default function AdminDashboard() {
   const [tab, setTab] = useState("overview");
 
-  // Interactive state
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [orders, setOrders] = useState(INITIAL_ORDERS);
-  const [suppliers, setSuppliers] = useState(INITIAL_SUPPLIERS);
+  // Data state
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-  const [editingProduct, setEditingProduct] = useState<typeof INITIAL_PRODUCTS[0] | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const showToast = useCallback((message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  const approveProduct = (id: number) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, status: "active" } : p));
-    showToast("Product approved and listed.");
+  // Load all data on mount
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/admin/products").then(r => r.json()),
+      fetch("/api/admin/orders").then(r => r.json()),
+      fetch("/api/admin/suppliers").then(r => r.json()),
+      fetch("/api/admin/stats").then(r => r.json()),
+    ]).then(([p, o, s, st]) => {
+      setProducts(p.products ?? []);
+      setOrders(o.orders ?? []);
+      setSuppliers(s.suppliers ?? []);
+      setMetrics(st.metrics ?? []);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  const approveProduct = async (id: string) => {
+    const res = await fetch("/api/admin/products", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "active" }) });
+    if (res.ok) {
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, status: "active" } : p));
+      showToast("Product approved and listed.");
+    } else showToast("Failed to approve product.", "error");
   };
 
-  const denyProduct = (id: number) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, status: "denied" } : p));
-    showToast("Product submission denied.", "error");
+  const denyProduct = async (id: string) => {
+    const res = await fetch("/api/admin/products", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "denied" }) });
+    if (res.ok) {
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, status: "denied" } : p));
+      showToast("Product submission denied.", "error");
+    }
   };
 
-  const advanceOrderStatus = (id: string) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: ORDER_FLOW[o.status] ?? o.status } : o));
-    showToast(`Order ${id} status updated.`);
+  const advanceOrderStatus = async (id: string) => {
+    const res = await fetch("/api/admin/orders", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, advance: true }) });
+    if (res.ok) {
+      const { order } = await res.json();
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: order.status } : o));
+      showToast(`Order status updated to ${order.status}.`);
+    } else showToast("Failed to update order.", "error");
   };
 
-  const approveSupplier = (id: number) => {
-    setSuppliers(prev => prev.map(s => s.id === id ? { ...s, status: "active" } : s));
-    showToast("Supplier approved and activated.");
+  const approveSupplier = async (id: string) => {
+    const res = await fetch("/api/admin/suppliers", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "active" }) });
+    if (res.ok) {
+      setSuppliers(prev => prev.map(s => s.id === id ? { ...s, status: "active" } : s));
+      showToast("Supplier approved and activated.");
+    } else showToast("Failed to approve supplier.", "error");
   };
 
-  const denySupplier = (id: number) => {
-    setSuppliers(prev => prev.filter(s => s.id !== id));
-    showToast("Supplier application rejected.", "error");
+  const denySupplier = async (id: string) => {
+    const res = await fetch("/api/admin/suppliers", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status: "denied" }) });
+    if (res.ok) {
+      setSuppliers(prev => prev.map(s => s.id === id ? { ...s, status: "denied" } : s));
+      showToast("Supplier application rejected.", "error");
+    }
   };
 
-  const saveProduct = (id: number, retail: number, stock: number) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, retail, stock } : p));
-    showToast("Product updated successfully.");
+  const saveProduct = async (id: string, price: number, stock: number) => {
+    const res = await fetch("/api/admin/products", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, price, stock }) });
+    if (res.ok) {
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, price, stock } : p));
+      showToast("Product updated successfully.");
+    } else showToast("Failed to update product.", "error");
   };
 
   const tabs = [
@@ -193,6 +212,7 @@ export default function AdminDashboard() {
 
   const pendingProducts = products.filter(p => p.status === "pending");
   const activeProducts = products.filter(p => p.status === "active");
+  const pendingSuppliers = suppliers.filter(s => s.status === "pending");
 
   return (
     <div className="min-h-screen bg-[#080808] text-white pt-28 pb-24 px-8 font-sans">
@@ -253,7 +273,7 @@ export default function AdminDashboard() {
             >
               {t.label}
               {tab === t.id && <motion.div layoutId="adminTab" className="absolute bottom-0 left-0 right-0 h-[1px] bg-gold" />}
-              {t.id === "suppliers" && suppliers.filter(s => s.status === "pending").length > 0 && (
+              {t.id === "suppliers" && pendingSuppliers.length > 0 && (
                 <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-gold" />
               )}
             </button>
@@ -262,13 +282,23 @@ export default function AdminDashboard() {
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-          {METRICS.map((m, i) => (
-            <motion.div key={m.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+          {(metrics.length > 0 ? metrics : Array(6).fill(null)).map((m, i) => (
+            <motion.div key={m?.label ?? i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
               className="bg-[#111] border border-white/[0.05] p-5 hover:border-gold/20 transition-colors group">
-              <p className="text-[7px] tracking-[0.3em] uppercase text-gray-600 mb-3">{m.label}</p>
-              <p className="font-serif text-2xl font-light text-white mb-1">{m.value}</p>
-              <p className={`text-[9px] font-mono ${m.trend === "up" ? "text-emerald-400" : m.trend === "warn" ? "text-gold" : "text-gray-500"}`}>{m.change}</p>
-              <p className="text-[7px] text-gray-700 mt-0.5">{m.sub}</p>
+              {m ? (
+                <>
+                  <p className="text-[7px] tracking-[0.3em] uppercase text-gray-600 mb-3">{m.label}</p>
+                  <p className="font-serif text-2xl font-light text-white mb-1">{m.value}</p>
+                  <p className={`text-[9px] font-mono ${m.trend === "up" ? "text-emerald-400" : m.trend === "warn" ? "text-gold" : "text-gray-500"}`}>{m.change}</p>
+                  <p className="text-[7px] text-gray-700 mt-0.5">{m.sub}</p>
+                </>
+              ) : (
+                <div className="animate-pulse space-y-2">
+                  <div className="h-2 bg-white/5 rounded w-16" />
+                  <div className="h-6 bg-white/5 rounded w-12" />
+                  <div className="h-2 bg-white/5 rounded w-10" />
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
@@ -289,6 +319,9 @@ export default function AdminDashboard() {
                     <span className="text-emerald-400 flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />{activeProducts.length} Active</span>
                   </div>
                 </div>
+                {loading ? (
+                  <div className="p-12 text-center text-gray-600 text-[9px] tracking-widest uppercase">Loading catalog...</div>
+                ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
@@ -304,14 +337,14 @@ export default function AdminDashboard() {
                           className="hover:bg-white/[0.02] transition-colors group">
                           <td className="px-5 py-4 font-mono text-[9px] text-gray-600">{p.sku}</td>
                           <td className="px-5 py-4 font-serif text-sm text-white">{p.name}</td>
-                          <td className="px-5 py-4 text-[10px] text-gray-400">{p.supplier}</td>
-                          <td className="px-5 py-4 font-mono text-[10px] text-gray-400">${p.cost.toLocaleString()}</td>
-                          <td className="px-5 py-4 font-mono text-[10px] text-white">{p.retail ? `$${p.retail.toLocaleString()}` : <span className="text-gray-600">—</span>}</td>
-                          <td className="px-5 py-4 font-mono text-[10px] text-emerald-400">{p.retail ? `+$${(p.retail - p.cost).toLocaleString()}` : "—"}</td>
+                          <td className="px-5 py-4 text-[10px] text-gray-400">{p.supplier_name}</td>
+                          <td className="px-5 py-4 font-mono text-[10px] text-gray-400">${(p.base_cost ?? 0).toLocaleString()}</td>
+                          <td className="px-5 py-4 font-mono text-[10px] text-white">{p.price ? `$${p.price.toLocaleString()}` : <span className="text-gray-600">—</span>}</td>
+                          <td className="px-5 py-4 font-mono text-[10px] text-emerald-400">{p.price && p.base_cost ? `+$${(p.price - p.base_cost).toLocaleString()}` : "—"}</td>
                           <td className="px-5 py-4 font-mono text-[10px] text-gray-300">
                             <div className="flex items-center gap-2">{p.stock}<SparkBar value={p.stock} max={20} /></div>
                           </td>
-                          <td className="px-5 py-4 font-mono text-[10px] text-gray-300">{p.sales || "—"}</td>
+                          <td className="px-5 py-4 font-mono text-[10px] text-gray-300">{p.sales_count || "—"}</td>
                           <td className="px-5 py-4">
                             <span className={`text-[8px] uppercase tracking-[0.15em] px-2 py-1 border ${STATUS_STYLES[p.status] ?? STATUS_STYLES.pending}`}>
                               {p.status}
@@ -332,6 +365,7 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -347,11 +381,16 @@ export default function AdminDashboard() {
                   </div>
                   <button onClick={() => showToast("Full order export sent to admin email.")} className="text-[8px] tracking-widest uppercase text-gray-500 hover:text-white transition-colors">Export All →</button>
                 </div>
+                {loading ? (
+                  <div className="p-12 text-center text-gray-600 text-[9px] tracking-widest uppercase">Loading orders...</div>
+                ) : orders.length === 0 ? (
+                  <div className="p-12 text-center text-gray-700 text-[9px] tracking-widest uppercase">No orders yet</div>
+                ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
                       <tr className="border-b border-white/[0.04] bg-[#141414]">
-                        {["Order ID", "Client", "Items", "Total", "Partner", "Status", "Date", ""].map(h => (
+                        {["Order ID", "Client", "Total", "Partner", "Status", "Date", ""].map(h => (
                           <th key={h} className="px-5 py-3.5 text-[8px] tracking-[0.3em] uppercase text-gray-600 font-normal whitespace-nowrap">{h}</th>
                         ))}
                       </tr>
@@ -360,22 +399,21 @@ export default function AdminDashboard() {
                       {orders.map((o, i) => (
                         <motion.tr key={o.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.06 }}
                           className="hover:bg-white/[0.02] transition-colors">
-                          <td className="px-5 py-4 font-mono text-[10px] text-gold">{o.id}</td>
+                          <td className="px-5 py-4 font-mono text-[10px] text-gold">{o.order_number}</td>
                           <td className="px-5 py-4">
-                            <p className="text-sm text-white">{o.customer}</p>
-                            <p className="text-[9px] text-gray-600 font-mono mt-0.5">{o.email}</p>
+                            <p className="text-sm text-white">{o.customer_name ?? "—"}</p>
+                            <p className="text-[9px] text-gray-600 font-mono mt-0.5">{o.customer_email}</p>
                           </td>
-                          <td className="px-5 py-4 font-mono text-[10px] text-gray-400">{o.items}</td>
                           <td className="px-5 py-4 font-mono text-[11px] text-white">${o.total.toLocaleString()}</td>
-                          <td className="px-5 py-4 text-[10px] text-gray-500">{o.supplier}</td>
+                          <td className="px-5 py-4 text-[10px] text-gray-500">{o.supplier_name ?? "—"}</td>
                           <td className="px-5 py-4">
                             <span className={`text-[8px] uppercase tracking-widest px-2 py-1 border ${STATUS_STYLES[o.status]}`}>{o.status}</span>
                           </td>
-                          <td className="px-5 py-4 font-mono text-[9px] text-gray-600">{o.date}</td>
+                          <td className="px-5 py-4 font-mono text-[9px] text-gray-600">{new Date(o.created_at).toLocaleDateString("en-CA")}</td>
                           <td className="px-5 py-4 text-right">
                             {o.status !== "delivered" ? (
                               <button onClick={() => advanceOrderStatus(o.id)} className="text-[8px] uppercase tracking-widest text-gray-500 hover:text-gold transition-colors whitespace-nowrap">
-                                → {ORDER_FLOW[o.status]}
+                                → {ORDER_FLOW[o.status] ?? "complete"}
                               </button>
                             ) : (
                               <span className="text-[8px] uppercase tracking-widest text-gray-700">Complete</span>
@@ -386,6 +424,7 @@ export default function AdminDashboard() {
                     </tbody>
                   </table>
                 </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -393,21 +432,24 @@ export default function AdminDashboard() {
           {/* ── Suppliers tab ── */}
           {(tab === "overview" || tab === "suppliers") && (
             <motion.div key="suppliers" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              {loading ? (
+                <div className="p-12 text-center text-gray-600 text-[9px] tracking-widest uppercase">Loading partners...</div>
+              ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                 {suppliers.map((s, i) => (
                   <motion.div key={s.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
                     className="bg-[#0f0f0f] border border-white/[0.05] p-6 hover:border-gold/20 transition-colors">
                     <div className="flex justify-between items-start mb-5">
                       <div>
-                        <p className="font-serif text-base text-white mb-1">{s.name}</p>
-                        <p className="text-[8px] tracking-[0.2em] text-gray-600 uppercase">{s.location}</p>
+                        <p className="font-serif text-base text-white mb-1">{s.company_name}</p>
+                        <p className="text-[8px] tracking-[0.2em] text-gray-600 uppercase">{[s.location, s.country].filter(Boolean).join(", ")}</p>
                       </div>
                       <span className={`text-[7px] uppercase tracking-widest px-2 py-1 border ${STATUS_STYLES[s.status]}`}>{s.status}</span>
                     </div>
-                    <p className="text-[9px] text-gray-500 mb-5">{s.speciality}</p>
+                    <p className="text-[9px] text-gray-500 mb-5">{s.specialty}</p>
                     <div className="space-y-2.5 text-[9px] font-mono">
-                      <div className="flex justify-between"><span className="text-gray-600">Products</span><span className="text-white">{s.products}</span></div>
-                      <div className="flex justify-between"><span className="text-gray-600">Revenue</span><span className="text-emerald-400">${s.revenue.toLocaleString()}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-600">Products</span><span className="text-white">{s.products_count}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-600">Revenue</span><span className="text-emerald-400">${(s.total_revenue ?? 0).toLocaleString()}</span></div>
                       {s.rating && <div className="flex justify-between"><span className="text-gray-600">Rating</span><span className="text-gold">★ {s.rating}</span></div>}
                     </div>
                     <div className="mt-6 flex gap-2">
@@ -417,12 +459,16 @@ export default function AdminDashboard() {
                           <button onClick={() => denySupplier(s.id)} className="px-3 border border-white/10 text-[8px] text-gray-600 hover:text-red-400 hover:border-red-500/30 transition-colors">✕</button>
                         </>
                       ) : (
-                        <button onClick={() => showToast(`${s.name} profile details loaded.`)} className="flex-1 border border-white/10 text-gray-500 text-[8px] tracking-widest uppercase py-2 hover:border-white/30 hover:text-white transition-colors">View Profile</button>
+                        <button onClick={() => showToast(`${s.company_name} profile loaded.`)} className="flex-1 border border-white/10 text-gray-500 text-[8px] tracking-widest uppercase py-2 hover:border-white/30 hover:text-white transition-colors">View Profile</button>
                       )}
                     </div>
                   </motion.div>
                 ))}
+                {suppliers.length === 0 && (
+                  <div className="col-span-4 p-12 text-center text-gray-700 text-[9px] tracking-widest uppercase">No partners yet</div>
+                )}
               </div>
+              )}
             </motion.div>
           )}
 
@@ -463,20 +509,22 @@ export default function AdminDashboard() {
                 <div className="bg-[#0f0f0f] border border-white/[0.05] p-8">
                   <p className="text-[8px] tracking-[0.3em] uppercase text-gray-600 mb-6">Top Selling</p>
                   <div className="space-y-5">
-                    {products.filter(p => p.sales > 0).sort((a, b) => b.sales - a.sales).map((p, i) => (
+                    {products.filter(p => (p.sales_count ?? 0) > 0).sort((a, b) => (b.sales_count ?? 0) - (a.sales_count ?? 0)).slice(0, 6).map((p, i) => {
+                      const maxSales = Math.max(...products.map(x => x.sales_count ?? 0), 1);
+                      return (
                       <div key={p.id} className="space-y-2">
                         <div className="flex justify-between text-[10px]">
                           <span className="text-gray-400 truncate pr-2">{p.name}</span>
-                          <span className="text-white font-mono shrink-0">{p.sales} sold</span>
+                          <span className="text-white font-mono shrink-0">{p.sales_count} sold</span>
                         </div>
                         <div className="h-1 bg-white/5">
-                          <motion.div initial={{ width: 0 }} animate={{ width: `${(p.sales / 48) * 100}%` }}
+                          <motion.div initial={{ width: 0 }} animate={{ width: `${((p.sales_count ?? 0) / maxSales) * 100}%` }}
                             transition={{ delay: i * 0.1, duration: 0.8 }}
                             className="h-full bg-gold"
                           />
                         </div>
                       </div>
-                    ))}
+                    );})}
                   </div>
                 </div>
               </div>

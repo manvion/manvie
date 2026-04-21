@@ -1,21 +1,21 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-const PRODUCTS = [
-  { id: 1, name: "Cashmere Coat", sku: "AC-001", baseCost: 450, retailPrice: 2400, status: "active", stock: 12, submitted: "Mar 20, 2026", sales: 22 },
-  { id: 2, name: "Silk Evening Dress", sku: "AC-002", baseCost: 320, retailPrice: 1850, status: "active", stock: 8, submitted: "Feb 15, 2026", sales: 14 },
-  { id: 3, name: "Wool Blend Trench", sku: "AC-003", baseCost: 380, retailPrice: null, status: "pending", stock: 20, submitted: "Apr 14, 2026", sales: 0 },
-];
-
-const ORDERS = [
-  { id: "ORD-4825", items: "Cashmere Coat × 1", earning: 450, status: "assigned", date: "Apr 20, 2026", customer: "Paris, FR" },
-  { id: "ORD-4823", items: "Silk Evening Dress × 2", earning: 640, status: "shipped", date: "Apr 18, 2026", customer: "London, UK" },
-  { id: "ORD-4819", items: "Cashmere Coat × 1", earning: 450, status: "delivered", date: "Apr 12, 2026", customer: "Dubai, UAE" },
-];
+type SupplierProduct = {
+  id: string; name: string; sku: string; base_cost: number;
+  price: number | null; status: string; stock: number;
+  created_at: string; sales_count: number;
+};
+type SupplierOrder = {
+  id: string; order_number: string; items: unknown;
+  total: number; status: string; created_at: string;
+  shipping_address: Record<string, string> | null;
+  customer_name: string | null;
+};
 
 const STATUS_STYLES: Record<string, string> = {
   active:    "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
@@ -144,7 +144,9 @@ function Toast({ message }: { message: string }) {
 export default function SupplierDashboard() {
   const [tab, setTab] = useState("overview");
   const [showUpload, setShowUpload] = useState(false);
-  const [orders, setOrders] = useState(ORDERS);
+  const [products, setProducts] = useState<SupplierProduct[]>([]);
+  const [orders, setOrders] = useState<SupplierOrder[]>([]);
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
 
   const showToastMsg = useCallback((msg: string) => {
@@ -152,9 +154,29 @@ export default function SupplierDashboard() {
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  const markDispatched = (id: string) => {
-    setOrders(prev => prev.map(o => o.id === id ? { ...o, status: "shipped" } : o));
-    showToastMsg(`Order ${id} marked as dispatched.`);
+  // Load data on mount
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/supplier/products").then(r => r.json()),
+      fetch("/api/supplier/orders").then(r => r.json()),
+    ]).then(([p, o]) => {
+      setProducts(p.products ?? []);
+      setOrders(o.orders ?? []);
+    }).finally(() => setLoading(false));
+  }, []);
+
+  const markDispatched = async (id: string) => {
+    const res = await fetch("/api/supplier/orders", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) {
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, status: "shipped" } : o));
+      showToastMsg(`Order dispatched successfully.`);
+    } else {
+      showToastMsg("Failed to update order. Please try again.");
+    }
   };
 
   const tabs = [
@@ -164,8 +186,8 @@ export default function SupplierDashboard() {
     { id: "earnings",  label: "Earnings" },
   ];
 
-  const totalEarnings = orders.filter(o => o.status !== "assigned").reduce((a, o) => a + o.earning, 0);
-  const escrow = orders.filter(o => o.status === "assigned").reduce((a, o) => a + o.earning, 0);
+  const totalEarnings = orders.filter(o => o.status !== "processing").reduce((a, o) => a + (o.total ?? 0), 0);
+  const escrow = orders.filter(o => o.status === "processing").reduce((a, o) => a + (o.total ?? 0), 0);
 
   return (
     <div className="min-h-screen bg-[#060608] text-white pt-28 pb-24 px-8 font-sans">
@@ -234,8 +256,8 @@ export default function SupplierDashboard() {
           {[
             { label: "Total Earnings", value: `$${totalEarnings.toLocaleString()}`, sub: "All time", color: "text-emerald-400" },
             { label: "In Escrow", value: `$${escrow}`, sub: "Awaiting fulfillment", color: "text-gold" },
-            { label: "Active Assets", value: PRODUCTS.filter(p => p.status === "active").length.toString(), sub: "Live on platform", color: "text-white" },
-            { label: "Pending Review", value: PRODUCTS.filter(p => p.status === "pending").length.toString(), sub: "Awaiting Maison approval", color: "text-gold" },
+            { label: "Active Assets", value: products.filter(p => p.status === "active").length.toString(), sub: "Live on platform", color: "text-white" },
+            { label: "Pending Review", value: products.filter(p => p.status === "pending").length.toString(), sub: "Awaiting Maison approval", color: "text-gold" },
           ].map((m, i) => (
             <motion.div
               key={m.label}
@@ -277,47 +299,46 @@ export default function SupplierDashboard() {
               <div className="bg-[#0e0e10] border border-white/[0.05] overflow-hidden mb-6">
                 <div className="px-6 py-5 border-b border-white/[0.04] bg-[#131316] flex justify-between items-center">
                   <h2 className="font-serif text-lg">Asset Portfolio</h2>
-                  <span className="text-[8px] tracking-widest uppercase text-gray-600">{PRODUCTS.length} assets</span>
+                  <span className="text-[8px] tracking-widest uppercase text-gray-600">{products.length} assets</span>
                 </div>
+                {loading ? (
+                  <div className="p-12 text-center text-gray-600 text-[9px] tracking-widest uppercase">Loading portfolio...</div>
+                ) : products.length === 0 ? (
+                  <div className="p-12 text-center text-gray-700 text-[9px] tracking-widest uppercase">No products yet. Upload your first asset.</div>
+                ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
                       <tr className="border-b border-white/[0.04] bg-[#131316]">
-                        {["SKU", "Asset Name", "Base Cost", "Retail Price", "Your Margin", "Stock", "Sales", "Status"].map(h => (
+                        {["SKU", "Asset Name", "Base Cost", "Retail Price", "Stock", "Sales", "Status", "Submitted"].map(h => (
                           <th key={h} className="px-5 py-3.5 text-[8px] tracking-[0.25em] uppercase text-gray-700 font-normal whitespace-nowrap">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.03]">
-                      {PRODUCTS.map((p, i) => (
-                        <motion.tr
-                          key={p.id}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: i * 0.06 }}
-                          className="hover:bg-white/[0.02] transition-colors"
-                        >
-                          <td className="px-5 py-4 font-mono text-[8px] text-gray-700">{p.sku}</td>
+                      {products.map((p, i) => (
+                        <motion.tr key={p.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.06 }}
+                          className="hover:bg-white/[0.02] transition-colors">
+                          <td className="px-5 py-4 font-mono text-[8px] text-gray-700">{p.sku ?? "—"}</td>
                           <td className="px-5 py-4 font-serif text-sm text-white">{p.name}</td>
-                          <td className="px-5 py-4 font-mono text-[10px] text-gray-400">${p.baseCost}</td>
+                          <td className="px-5 py-4 font-mono text-[10px] text-gray-400">${(p.base_cost ?? 0).toLocaleString()}</td>
                           <td className="px-5 py-4 font-mono text-[10px] text-white">
-                            {p.retailPrice ? `$${p.retailPrice.toLocaleString()}` : <span className="text-gray-700">Pending</span>}
-                          </td>
-                          <td className="px-5 py-4 font-mono text-[10px] text-emerald-400">
-                            {p.retailPrice ? `+$${(p.baseCost).toLocaleString()}` : "—"}
+                            {p.price ? `$${p.price.toLocaleString()}` : <span className="text-gray-700">Pending</span>}
                           </td>
                           <td className="px-5 py-4 font-mono text-[10px] text-gray-300">{p.stock}</td>
-                          <td className="px-5 py-4 font-mono text-[10px] text-gray-400">{p.sales || "—"}</td>
+                          <td className="px-5 py-4 font-mono text-[10px] text-gray-400">{p.sales_count || "—"}</td>
                           <td className="px-5 py-4">
                             <span className={`text-[7px] uppercase tracking-widest px-2 py-1 border ${STATUS_STYLES[p.status]}`}>
                               {p.status}
                             </span>
                           </td>
+                          <td className="px-5 py-4 font-mono text-[9px] text-gray-700">{new Date(p.created_at).toLocaleDateString("en-CA")}</td>
                         </motion.tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -329,39 +350,39 @@ export default function SupplierDashboard() {
                 <div className="px-6 py-5 border-b border-white/[0.04] bg-[#131316]">
                   <h2 className="font-serif text-lg">Dispatch Queue</h2>
                 </div>
+                {loading ? (
+                  <div className="p-12 text-center text-gray-600 text-[9px] tracking-widest uppercase">Loading orders...</div>
+                ) : orders.length === 0 ? (
+                  <div className="p-12 text-center text-gray-700 text-[9px] tracking-widest uppercase">No orders assigned yet</div>
+                ) : (
                 <div className="divide-y divide-white/[0.04]">
                   {orders.map((o, i) => (
-                    <motion.div
-                      key={o.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.08 }}
-                      className="px-6 py-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
-                    >
+                    <motion.div key={o.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.08 }}
+                      className="px-6 py-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
                       <div className="flex items-center gap-8">
                         <div>
-                          <p className="font-mono text-[10px] text-blue-400">{o.id}</p>
-                          <p className="text-[9px] text-gray-600 mt-0.5">{o.date}</p>
+                          <p className="font-mono text-[10px] text-blue-400">{o.order_number}</p>
+                          <p className="text-[9px] text-gray-600 mt-0.5">{new Date(o.created_at).toLocaleDateString("en-CA")}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-white">{o.items}</p>
-                          <p className="text-[9px] text-gray-600 mt-0.5">→ {o.customer}</p>
+                          <p className="text-sm text-white">{o.customer_name ?? "Client"}</p>
+                          <p className="text-[9px] text-gray-600 mt-0.5">
+                            {o.shipping_address?.city ?? "—"}, {o.shipping_address?.country ?? ""}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-8">
-                        <p className="font-mono text-emerald-400 font-medium">+${o.earning}</p>
-                        <span className={`text-[8px] uppercase tracking-widest px-3 py-1 border ${STATUS_STYLES[o.status]}`}>
+                        <p className="font-mono text-emerald-400 font-medium">+${(o.total ?? 0).toLocaleString()}</p>
+                        <span className={`text-[8px] uppercase tracking-widest px-3 py-1 border ${STATUS_STYLES[o.status] ?? STATUS_STYLES.pending}`}>
                           {o.status}
                         </span>
-                        {o.status === "assigned" ? (
-                          <button
-                            onClick={() => markDispatched(o.id)}
+                        {o.status === "processing" ? (
+                          <button onClick={() => markDispatched(o.id)}
                             className="text-[9px] uppercase tracking-widest text-gold border border-gold/20 px-4 py-2 hover:bg-gold hover:text-black transition-colors">
                             Mark Dispatched
                           </button>
                         ) : (
-                          <button
-                            onClick={() => showToastMsg(`Tracking loaded for ${o.id}.`)}
+                          <button onClick={() => showToastMsg(`Tracking loaded for ${o.order_number}.`)}
                             className="text-[9px] uppercase tracking-widest text-gray-600 hover:text-white transition-colors">
                             Track →
                           </button>
@@ -370,6 +391,7 @@ export default function SupplierDashboard() {
                     </motion.div>
                   ))}
                 </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -381,25 +403,25 @@ export default function SupplierDashboard() {
                 <div className="bg-[#0e0e10] border border-white/[0.05] p-8">
                   <p className="text-[8px] tracking-[0.3em] uppercase text-gray-600 mb-6">Earnings Breakdown</p>
                   <div className="space-y-4">
-                    {PRODUCTS.filter(p => p.sales > 0).map(p => (
+                    {products.filter(p => (p.sales_count ?? 0) > 0).map((p, idx) => {
+                      const maxSales = Math.max(...products.map(x => x.sales_count ?? 0), 1);
+                      return (
                       <div key={p.id} className="flex items-center gap-4">
                         <div className="flex-1">
                           <div className="flex justify-between mb-1">
                             <span className="text-[10px] text-gray-400">{p.name}</span>
-                            <span className="text-[10px] text-emerald-400 font-mono">${(p.baseCost * p.sales).toLocaleString()}</span>
+                            <span className="text-[10px] text-emerald-400 font-mono">${((p.base_cost ?? 0) * (p.sales_count ?? 0)).toLocaleString()}</span>
                           </div>
                           <div className="h-1 bg-white/5">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${(p.sales / 22) * 100}%` }}
-                              transition={{ duration: 0.8 }}
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${((p.sales_count ?? 0) / maxSales) * 100}%` }}
+                              transition={{ delay: idx * 0.1, duration: 0.8 }}
                               className="h-full bg-gradient-to-r from-blue-600 to-blue-400"
                             />
                           </div>
                         </div>
-                        <span className="text-[9px] text-gray-600 font-mono">{p.sales} units</span>
+                        <span className="text-[9px] text-gray-600 font-mono">{p.sales_count} units</span>
                       </div>
-                    ))}
+                    );})}
                   </div>
                   <div className="border-t border-white/10 pt-6 mt-6 flex justify-between">
                     <span className="text-[9px] uppercase tracking-widest text-gray-600">Total Earned</span>

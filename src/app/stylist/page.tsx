@@ -252,7 +252,7 @@ export default function AIStylistPage() {
         image: item.img,
         category: item.type,
       });
-      setAddedIds(prev => new Set([...prev, item.productId]));
+      setAddedIds(prev => new Set(Array.from(prev).concat(item.productId)));
     });
   };
 

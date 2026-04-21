@@ -12,7 +12,14 @@ export function createToken(payload: Record<string, unknown>): string {
   return `${b64}.${sig}`;
 }
 
-export function verifyToken(token: string): Record<string, unknown> | null {
+/**
+ * Verifies a token and optionally checks it has the expected role.
+ * Returns the decoded payload if valid, or null if invalid/expired/wrong role.
+ */
+export function verifyToken(
+  token: string,
+  expectedRole?: string
+): Record<string, unknown> | null {
   const parts = token.split(".");
   if (parts.length !== 2) return null;
   const [b64, sig] = parts;
@@ -28,6 +35,8 @@ export function verifyToken(token: string): Record<string, unknown> | null {
     const payload = JSON.parse(Buffer.from(b64, "base64url").toString());
     // Token expires after 24h
     if (Date.now() - payload.iat > 86400000) return null;
+    // Role check
+    if (expectedRole && payload.role !== expectedRole) return null;
     return payload as Record<string, unknown>;
   } catch {
     return null;
