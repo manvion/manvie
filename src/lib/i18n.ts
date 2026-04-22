@@ -6,6 +6,9 @@ export const translations = {
       name: "MANVIÉ",
       tagline: "Québec Haute Couture, Reimagined by AI",
       founded: "Montréal, Québec",
+      philosophy: "The Manvié Philosophy",
+      maisonStory: "Maison Story",
+      collection: "Collection",
       description: "A Québécois luxury fashion house where master craftsmanship meets artificial intelligence.",
       city: "Montréal",
       country: "Canada",
@@ -201,21 +204,25 @@ export const translations = {
     navCollections: [
       {
         category: "La Femme",
+        label: "Women",
         subtitle: "Womenswear",
         items: ["New Arrivals", "Coats", "Evening Dresses", "Silk", "Accessories"],
       },
       {
         category: "L'Homme",
+        label: "Men",
         subtitle: "Menswear",
         items: ["New Arrivals", "Tailoring", "Coats", "Casual Luxe", "Accessories"],
       },
       {
         category: "L'Enfant",
+        label: "Children",
         subtitle: "Children's Couture",
         items: ["New Arrivals", "Gowns & Formal", "Coats", "Cashmere"],
       },
       {
         category: "L'Atelier",
+        label: "Atelier",
         subtitle: "Accessories & Craft",
         items: ["Handbags", "Jewellery", "Scarves", "Leather Goods"],
       },
@@ -227,6 +234,9 @@ export const translations = {
       name: "MANVIÉ",
       tagline: "Haute Couture québécoise, réimaginée par l'IA",
       founded: "Montréal, Québec",
+      philosophy: "La Philosophie Manvié",
+      maisonStory: "Maison Story",
+      collection: "Collection",
       description: "Une maison de mode de luxe québécoise où l'artisanat rencontre l'intelligence artificielle.",
       city: "Montréal",
       country: "Canada",
@@ -422,21 +432,25 @@ export const translations = {
     navCollections: [
       {
         category: "La Femme",
+        label: "La Femme",
         subtitle: "Prêt-à-Porter Femme",
         items: ["Nouvelles Arrivées", "Manteaux", "Robes de Soirée", "Soie", "Accessoires"],
       },
       {
         category: "L'Homme",
+        label: "L'Homme",
         subtitle: "Mode Homme",
         items: ["Nouvelles Arrivées", "Tailoring", "Manteaux", "Casual Luxe", "Accessoires"],
       },
       {
         category: "L'Enfant",
+        label: "L'Enfant",
         subtitle: "Couture Enfant",
         items: ["Nouvelles Arrivées", "Robes & Robes de Gala", "Manteaux", "Cachemire"],
       },
       {
         category: "L'Atelier",
+        label: "L'Atelier",
         subtitle: "Accessoires & Artisanat",
         items: ["Sacs à Main", "Bijoux", "Foulards", "Maroquinerie"],
       },

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { useApp } from "@/context/AppContext";
 
 // ─── Data ───────────────────────────────────────────────────────────────────
 
@@ -133,6 +134,8 @@ function ComparisonSlider({ before, after }: { before: string; after: string }) 
 // ─── Add Profile Modal ───────────────────────────────────────────────────────
 
 function AddProfileModal({ onAdd, onClose }: { onAdd: (p: Profile) => void; onClose: () => void }) {
+  const { t } = useApp();
+  const tShop = t.shop as Record<string, string>;
   const [name, setName] = useState("");
   const [gender, setGender] = useState<"femme" | "homme" | "enfant" | null>(null);
   const [size, setSize] = useState("");
@@ -213,7 +216,7 @@ function AddProfileModal({ onAdd, onClose }: { onAdd: (p: Profile) => void; onCl
                   }`}
                 >
                   <div className="text-xl mb-1">{genderAvatars[g]}</div>
-                  {g === "femme" ? "La Femme" : g === "homme" ? "L'Homme" : "L'Enfant"}
+                  {g === "femme" ? tShop.catWomen : g === "homme" ? tShop.catMen : tShop.catChildren}
                 </button>
               ))}
             </div>
@@ -301,6 +304,8 @@ function CompleteProfilePrompt({ profile, onEdit }: { profile: Profile; onEdit: 
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 function VirtualTryOnInner() {
+  const { t } = useApp();
+  const tShop = t.shop as Record<string, string>;
   const searchParams = useSearchParams();
   const productParam = searchParams.get("product");
 
@@ -523,7 +528,7 @@ function VirtualTryOnInner() {
   };
 
   const genderLabel = (g: Profile["gender"]) =>
-    g === "femme" ? "La Femme" : g === "homme" ? "L'Homme" : g === "enfant" ? "L'Enfant" : null;
+    g === "femme" ? tShop.catWomen : g === "homme" ? tShop.catMen : g === "enfant" ? tShop.catChildren : null;
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -765,7 +770,7 @@ function VirtualTryOnInner() {
                   {activeProfile.gender && (
                     <div className="px-5 pt-3">
                       <p className="text-[8px] tracking-[0.2em] text-gray-400 uppercase">
-                        Showing: {genderLabel(activeProfile.gender)} {garmentTab === "accessories" ? "" : "& L'Atelier"}
+                        Showing: {genderLabel(activeProfile.gender)} {garmentTab === "accessories" ? "" : `& ${tShop.catAtelier}`}
                       </p>
                     </div>
                   )}

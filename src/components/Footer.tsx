@@ -3,16 +3,17 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
+import { useApp } from "@/context/AppContext";
 
-const FOOTER_LINKS = {
-  collection: [
-    { label: "La Femme", href: "/shop?category=La+Femme" },
-    { label: "L'Homme", href: "/shop?category=L%27Homme" },
-    { label: "L'Enfant", href: "/shop?category=L%27Enfant" },
-    { label: "L'Atelier", href: "/shop?category=L%27Atelier" },
-    { label: "New Arrivals", href: "/shop" },
-    { label: "Bestsellers", href: "/shop" },
-  ],
+// hrefs stay French (DB keys); labels come from translations at runtime
+const COLLECTION_HREFS = [
+  "/shop?category=La+Femme",
+  "/shop?category=L%27Homme",
+  "/shop?category=L%27Enfant",
+  "/shop?category=L%27Atelier",
+];
+
+const FOOTER_LINKS_STATIC = {
   maison: [
     { label: "Our Story", href: "#" },
     { label: "Savoir-Faire", href: "#" },
@@ -47,6 +48,11 @@ const SOCIAL_LINKS = [
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const { t } = useApp();
+  type NavCol = { label: string };
+  const navCols = t.navCollections as unknown as NavCol[];
+  const collectionLinks = navCols.map((col, i) => ({ label: col.label, href: COLLECTION_HREFS[i] }));
+  const FOOTER_LINKS = { ...FOOTER_LINKS_STATIC, collection: collectionLinks };
 
   return (
     <footer className="bg-black text-white relative overflow-hidden">

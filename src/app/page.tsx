@@ -6,62 +6,19 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "@/context/AppContext";
 
-const CATEGORIES = [
-  {
-    name: "La Femme",
-    subtitle: "Womenswear",
-    image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=1200&auto=format&fit=crop",
-    count: "142 Pieces",
-    href: "/shop?category=La+Femme"
-  },
-  {
-    name: "L'Homme",
-    subtitle: "Menswear",
-    image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=1200&auto=format&fit=crop",
-    count: "98 Pieces",
-    href: "/shop?category=L%27Homme"
-  },
-  {
-    name: "L'Enfant",
-    subtitle: "Children's Couture",
-    image: "https://images.unsplash.com/photo-1522771930-78848d92871d?q=80&w=1200&auto=format&fit=crop",
-    count: "54 Pieces",
-    href: "/shop?category=L%27Enfant"
-  },
-  {
-    name: "L'Atelier",
-    subtitle: "Accessories & Artisanal",
-    image: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=1200&auto=format&fit=crop",
-    count: "76 Pieces",
-    href: "/shop?category=L%27Atelier"
-  }
+// Static visual data for categories — labels come from i18n navCollections
+const CATEGORY_VISUALS = [
+  { image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=1200&auto=format&fit=crop", count: "142 Pieces", href: "/shop?category=La+Femme" },
+  { image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=1200&auto=format&fit=crop", count: "98 Pieces",  href: "/shop?category=L%27Homme" },
+  { image: "https://images.unsplash.com/photo-1522771930-78848d92871d?q=80&w=1200&auto=format&fit=crop", count: "54 Pieces",  href: "/shop?category=L%27Enfant" },
+  { image: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=1200&auto=format&fit=crop", count: "76 Pieces",  href: "/shop?category=L%27Atelier" },
 ];
 
-const EDITORIAL_FEATURES = [
-  {
-    id: "01",
-    title: "The Signature Coat",
-    subtitle: "La Femme Collection",
-    price: "$2,400",
-    image: "https://images.unsplash.com/photo-1544022613-e87ca75a784a?q=80&w=1200&auto=format&fit=crop",
-    href: "/product/1"
-  },
-  {
-    id: "02",
-    title: "Velvet Smoking Jacket",
-    subtitle: "L'Homme Collection",
-    price: "$1,950",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1200&auto=format&fit=crop",
-    href: "/product/7"
-  },
-  {
-    id: "03",
-    title: "Noir Evening Gown",
-    subtitle: "La Femme Collection",
-    price: "$4,200",
-    image: "https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=1200&auto=format&fit=crop",
-    href: "/product/5"
-  }
+// Static data for editorial features — subtitles reference collection index (0=women, 1=men)
+const EDITORIAL_DATA = [
+  { id: "01", title: "The Signature Coat",    price: "$2,400", colIdx: 0, image: "https://images.unsplash.com/photo-1544022613-e87ca75a784a?q=80&w=1200&auto=format&fit=crop", href: "/product/1" },
+  { id: "02", title: "Velvet Smoking Jacket", price: "$1,950", colIdx: 1, image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1200&auto=format&fit=crop", href: "/product/7" },
+  { id: "03", title: "Noir Evening Gown",     price: "$4,200", colIdx: 0, image: "https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=1200&auto=format&fit=crop", href: "/product/5" },
 ];
 
 const TICKER_ITEMS = [
@@ -207,6 +164,7 @@ function TickerSection() {
 }
 
 function ManifestoSection() {
+  const { t } = useApp();
   return (
     <section className="bg-black py-40 px-8">
       <div className="max-w-5xl mx-auto">
@@ -217,7 +175,7 @@ function ManifestoSection() {
           transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
           className="text-center"
         >
-          <p className="text-[9px] tracking-[0.5em] uppercase text-gold mb-12">La Philosophie Manvié</p>
+          <p className="text-[9px] tracking-[0.5em] uppercase text-gold mb-12">{t.brand.philosophy}</p>
           <p className="font-serif text-[clamp(1.8rem,4vw,4rem)] leading-[1.25] text-white/90 mb-16">
             We redefine luxury through the seamless convergence of{" "}
             <em className="text-gold not-italic">artificial intelligence</em>{" "}
@@ -243,6 +201,12 @@ function ManifestoSection() {
 }
 
 function CategoryGridSection() {
+  const { t } = useApp();
+  const tShop = t.shop as Record<string, string>;
+  type NavCol = { category: string; label: string; subtitle: string };
+  const navCols = t.navCollections as unknown as NavCol[];
+  const categories = navCols.map((col, idx) => ({ ...col, ...CATEGORY_VISUALS[idx] }));
+
   return (
     <section className="bg-black pb-8 px-4 md:px-6">
       <div className="max-w-[1800px] mx-auto">
@@ -253,15 +217,15 @@ function CategoryGridSection() {
           transition={{ duration: 1 }}
           className="flex justify-between items-end mb-10 px-2"
         >
-          <p className="text-[9px] tracking-[0.5em] uppercase text-gold">Le Catalogue</p>
+          <p className="text-[9px] tracking-[0.5em] uppercase text-gold">{tShop.catalogue}</p>
           <Link href="/shop" className="text-[9px] tracking-[0.3em] uppercase text-gray-500 hover:text-white transition-colors border-b border-transparent hover:border-white pb-0.5">
             View All →
           </Link>
         </motion.div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {CATEGORIES.map((cat, idx) => (
-            <Link href={cat.href} key={cat.name}>
+          {categories.map((cat, idx) => (
+            <Link href={cat.href} key={cat.category}>
               <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -271,7 +235,7 @@ function CategoryGridSection() {
               >
                 <Image
                   src={cat.image}
-                  alt={cat.name}
+                  alt={cat.label}
                   fill
                   className="object-cover transition-transform duration-[2.5s] ease-[0.16,1,0.3,1] group-hover:scale-[1.06] opacity-75 group-hover:opacity-100"
                 />
@@ -280,7 +244,7 @@ function CategoryGridSection() {
                   <p className="text-[8px] tracking-[0.35em] text-gold uppercase mb-2 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-3 group-hover:translate-y-0">
                     {cat.count}
                   </p>
-                  <h3 className="font-serif text-2xl md:text-3xl text-white mb-1">{cat.name}</h3>
+                  <h3 className="font-serif text-2xl md:text-3xl text-white mb-1">{cat.label}</h3>
                   <p className="text-[9px] tracking-[0.35em] text-white/50 uppercase">{cat.subtitle}</p>
                   <div className="mt-4 w-0 group-hover:w-full h-[1px] bg-gold transition-all duration-700 ease-[0.16,1,0.3,1]" />
                 </div>
@@ -294,6 +258,16 @@ function CategoryGridSection() {
 }
 
 function EditorialSection() {
+  const { t } = useApp();
+  type NavCol = { label: string };
+  const navCols = t.navCollections as unknown as NavCol[];
+  const collection = t.brand.collection as string;
+  // Build full feature list with translated subtitles
+  const EDITORIAL_FEATURES = EDITORIAL_DATA.map(f => ({
+    ...f,
+    subtitle: `${navCols[f.colIdx]?.label ?? ""} ${collection}`,
+  }));
+
   const [activeIdx, setActiveIdx] = useState(0);
 
   useEffect(() => {
@@ -301,6 +275,7 @@ function EditorialSection() {
       setActiveIdx(prev => (prev + 1) % EDITORIAL_FEATURES.length);
     }, 4000);
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -479,6 +454,7 @@ function AIFeaturesSection() {
 }
 
 function BrandStorySection() {
+  const { t } = useApp();
   return (
     <section className="bg-black overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[90vh]">
@@ -512,7 +488,7 @@ function BrandStorySection() {
             viewport={{ once: true }}
             transition={{ duration: 1.2, delay: 0.2 }}
           >
-            <p className="text-[9px] tracking-[0.5em] uppercase text-gold mb-8">Maison Story</p>
+            <p className="text-[9px] tracking-[0.5em] uppercase text-gold mb-8">{t.brand.maisonStory as string}</p>
             <h2 className="font-serif text-[clamp(2.5rem,4vw,4.5rem)] text-white leading-[1.1] mb-10">
               Born in Montréal.<br />
               <span className="text-gold/70 italic">Elevated</span> by Intelligence.
@@ -538,6 +514,14 @@ function BrandStorySection() {
 }
 
 function FeaturedProductsSection() {
+  const { t } = useApp();
+  const tShop = t.shop as Record<string, string>;
+  // cat keys match DB values; labels come from translations
+  const catLabel: Record<string, string> = {
+    "La Femme": tShop.catWomen,
+    "L'Atelier": tShop.catAtelier,
+    "L'Homme": tShop.catMen,
+  };
   const products = [
     { id: "1", name: "Signature Coat", price: "$2,400", image: "https://images.unsplash.com/photo-1544022613-e87ca75a784a?q=80&w=800&auto=format&fit=crop", cat: "La Femme" },
     { id: "4", name: "Leather Handbag", price: "$3,200", image: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=800&auto=format&fit=crop", cat: "L'Atelier" },
@@ -588,7 +572,7 @@ function FeaturedProductsSection() {
                   </div>
                   <div className="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500 delay-100">
                     <span className="bg-black text-white text-[8px] tracking-[0.2em] uppercase px-3 py-1.5">
-                      {p.cat}
+                      {catLabel[p.cat] ?? p.cat}
                     </span>
                   </div>
                 </div>

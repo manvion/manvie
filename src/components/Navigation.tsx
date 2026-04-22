@@ -14,7 +14,7 @@ const COLLECTION_IMAGES = [
   "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=600&auto=format&fit=crop",
 ];
 
-type NavCol = { category: string; subtitle: string; items: string[] };
+type NavCol = { category: string; label: string; subtitle: string; items: string[] };
 
 export default function Navigation() {
   const { count } = useCart();
@@ -267,7 +267,7 @@ export default function Navigation() {
                           : "text-gray-400 dark:text-white/40 hover:text-black dark:hover:text-white"
                       }`}
                     >
-                      <div className="font-medium">{col.category}</div>
+                      <div className="font-medium">{col.label}</div>
                       <div className="text-[8px] opacity-60 mt-0.5">{col.subtitle}</div>
                     </button>
                   ))}
@@ -276,7 +276,7 @@ export default function Navigation() {
                 {/* Items */}
                 <div className="col-span-2 pl-4">
                   <p className="text-[8px] tracking-[0.4em] text-gold uppercase mb-5">
-                    {activeMega.category}
+                    {activeMega.label}
                   </p>
                   <ul className="space-y-3">
                     {activeMega.items.map((item) => (
@@ -305,7 +305,7 @@ export default function Navigation() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={activeMega.image}
-                      alt={activeMega.category}
+                      alt={activeMega.label}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -368,7 +368,7 @@ export default function Navigation() {
                     onClick={() => setMobileOpen(false)}
                     className="border border-gray-100 dark:border-white/10 p-3 hover:border-gold transition-colors"
                   >
-                    <p className="text-[9px] tracking-[0.2em] uppercase font-medium text-black dark:text-white">{col.category}</p>
+                    <p className="text-[9px] tracking-[0.2em] uppercase font-medium text-black dark:text-white">{col.label}</p>
                     <p className="text-[8px] text-gray-400 dark:text-white/40 mt-0.5">{col.subtitle}</p>
                   </Link>
                 ))}
