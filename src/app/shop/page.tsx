@@ -8,6 +8,20 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useApp } from "@/context/AppContext";
 
+// ─── Saved shopper profile from try-on page ───────────────────────────────────
+type SavedProfile = { name: string; avatar: string; gender: string | null; photo: string | null };
+
+function useSavedProfile(): SavedProfile | null {
+  const [profile, setProfile] = useState<SavedProfile | null>(null);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("manvie-tryon-profile");
+      if (raw) setProfile(JSON.parse(raw));
+    } catch { /* non-critical */ }
+  }, []);
+  return profile;
+}
+
 type Product = {
   id: string; name: string; price: number;
   image_url: string; category: string; badge: string | null;
@@ -26,6 +40,7 @@ type CategoryKey = typeof CATEGORY_KEYS[number];
 function ShopPageInner() {
   const { t } = useApp();
   const tShop = t.shop as Record<string, string>;
+  const savedProfile = useSavedProfile();
   const searchParams = useSearchParams();
   const initialCategory = (searchParams.get("category") as CategoryKey) || "Le Catalogue";
 
@@ -237,18 +252,56 @@ function ShopPageInner() {
                             {product.badge}
                           </div>
                         )}
-                        {/* Quick actions */}
-                        <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 transition-all duration-500 flex gap-2">
-                          <span className="flex-1 bg-white/90 backdrop-blur text-black text-[8px] tracking-[0.2em] uppercase py-2 text-center shadow-lg">
-                            {categoryLabels[product.category as CategoryKey] ?? product.category}
-                          </span>
-                          <Link
-                            href={`/try-on?product=${product.id}`}
-                            onClick={e => e.stopPropagation()}
-                            className="bg-black text-white text-[8px] tracking-[0.15em] uppercase py-2 px-3 shadow-lg hover:bg-gold hover:text-black transition-colors"
-                          >
-                            Try
-                          </Link>
+                        {/* Shopper try-on overlay */}
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none group-hover:pointer-events-auto">
+                          {/* Gradient backdrop */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                          {/* Panel */}
+                          <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                            {savedProfile ? (
+                              <>
+                                {/* Shopper identity */}
+                                <div className="flex items-center gap-2.5 mb-3">
+                                  {savedProfile.photo ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={savedProfile.photo}
+                                      alt={savedProfile.name}
+                                      className="w-9 h-9 rounded-full object-cover object-top border-2 border-gold shadow-lg"
+                                    />
+                                  ) : (
+                                    <div className="w-9 h-9 rounded-full bg-white/10 border border-gold/60 flex items-center justify-center text-base shadow-lg">
+                                      {savedProfile.avatar}
+                                    </div>
+                                  )}
+                                  <div>
+                                    <p className="text-[7px] tracking-[0.35em] text-gold uppercase">Try on for</p>
+                                    <p className="text-white text-[11px] font-medium leading-tight">{savedProfile.name}</p>
+                                  </div>
+                                </div>
+                                <Link
+                                  href={`/try-on?product=${product.id}`}
+                                  onClick={e => e.stopPropagation()}
+                                  className="flex items-center justify-between w-full bg-gold text-black text-[8px] tracking-[0.25em] uppercase py-2.5 px-3 shadow-lg hover:bg-white transition-colors duration-300"
+                                >
+                                  <span>Virtual Try-On</span>
+                                  <span className="text-[10px]">→</span>
+                                </Link>
+                              </>
+                            ) : (
+                              <>
+                                <p className="text-[8px] tracking-[0.25em] text-white/60 uppercase mb-2.5">No fitting profile</p>
+                                <Link
+                                  href={`/try-on?product=${product.id}`}
+                                  onClick={e => e.stopPropagation()}
+                                  className="flex items-center justify-between w-full bg-white/10 border border-white/30 backdrop-blur text-white text-[8px] tracking-[0.25em] uppercase py-2.5 px-3 hover:bg-white hover:text-black transition-colors duration-300"
+                                >
+                                  <span>Set up &amp; Try On</span>
+                                  <span className="text-[10px]">→</span>
+                                </Link>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div>

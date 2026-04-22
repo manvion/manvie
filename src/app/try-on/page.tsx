@@ -310,6 +310,8 @@ function VirtualTryOnInner() {
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
 
   const [userImages, setUserImages] = useState<Record<string, string | null>>({});
+  // Base64 / persistent URLs for cross-page access (object URLs are session-only)
+  const [storedPhotos, setStoredPhotos] = useState<Record<string, string>>({});
   const [selectedGarment, setSelectedGarment] = useState<typeof GARMENTS[0] | null>(null);
 
   // Garment tab / filters
@@ -364,6 +366,19 @@ function VirtualTryOnInner() {
     }
   });
 
+  // ── Persist active shopper to localStorage (for shop page hover) ─────────
+  useEffect(() => {
+    const photo = storedPhotos[activeProfile.id] ?? null;
+    try {
+      localStorage.setItem("manvie-tryon-profile", JSON.stringify({
+        name: activeProfile.name,
+        avatar: activeProfile.avatar,
+        gender: activeProfile.gender,
+        photo,
+      }));
+    } catch { /* quota exceeded — non-critical */ }
+  }, [activeProfile, storedPhotos]);
+
   // ── Image upload ─────────────────────────────────────────────────────────
   const processFile = useCallback((file: File) => {
     const validation = validateImage(file);
@@ -373,6 +388,12 @@ function VirtualTryOnInner() {
     setUserImages(prev => ({ ...prev, [activeProfile.id]: url }));
     setAiResults(prev => ({ ...prev, [activeProfile.id]: null }));
     setCompareMode(false);
+    // Convert to base64 so it can be read cross-page from localStorage
+    const reader = new FileReader();
+    reader.onload = () => {
+      setStoredPhotos(prev => ({ ...prev, [activeProfile.id]: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
   }, [activeProfile.id]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -395,6 +416,8 @@ function VirtualTryOnInner() {
     const url = demos[profiles.indexOf(activeProfile) % demos.length];
     setUserImages(prev => ({ ...prev, [activeProfile.id]: url }));
     setAiResults(prev => ({ ...prev, [activeProfile.id]: null }));
+    // HTTP URLs can be persisted directly (no FileReader needed)
+    setStoredPhotos(prev => ({ ...prev, [activeProfile.id]: url }));
   };
 
   // ── Profile management ───────────────────────────────────────────────────
