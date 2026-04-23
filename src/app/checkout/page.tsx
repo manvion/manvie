@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
 import Image from "next/image";
+import { useCart } from "@/context/CartContext";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -197,12 +198,7 @@ export default function CheckoutPage() {
     number: "", name: "", expiry: "", cvc: ""
   });
 
-  const cartItems = [
-    { id: "1", name: "Manvié Signature Coat", price: 2400, size: "M", quantity: 1, image: "https://images.unsplash.com/photo-1544022613-e87ca75a784a?q=80&w=300&auto=format&fit=crop" },
-    { id: "4", name: "Italian Leather Handbag", price: 3200, size: "One Size", quantity: 1, image: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?q=80&w=300&auto=format&fit=crop" },
-  ];
-
-  const subtotal = cartItems.reduce((a, i) => a + i.price * i.quantity, 0);
+  const { items: cartItems, subtotal } = useCart();
   const tax = Math.round(subtotal * 0.05);
   const total = subtotal + tax;
 
@@ -228,6 +224,24 @@ export default function CheckoutPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }, msgs.length * 900 + 400);
   };
+
+  // ── Empty cart ───────────────────────────────────────────────────────────
+  if (!success && cartItems.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#f8f7f5] text-black pt-32 pb-24 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-[9px] tracking-[0.5em] uppercase text-gold mb-4">Your Bag is Empty</p>
+          <h1 className="font-serif text-4xl mb-8">Nothing to Checkout</h1>
+          <Link
+            href="/shop"
+            className="inline-block bg-black text-white px-12 py-4 text-[10px] tracking-[0.35em] uppercase hover:bg-gold hover:text-black transition-colors duration-500"
+          >
+            Explore the Collection
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // ── Success screen ───────────────────────────────────────────────────────
   if (success) {
@@ -397,7 +411,7 @@ export default function CheckoutPage() {
                         onChange={e => setShipping(prev => ({ ...prev, country: e.target.value }))}
                         className="w-full border-b border-gray-200 py-3 text-sm bg-transparent focus:outline-none focus:border-black transition-colors appearance-none"
                       >
-                        {["France", "United States", "United Kingdom", "Germany", "Italy", "Japan", "UAE", "Singapore", "Australia"].map(c => (
+                        {["Canada", "United States", "France", "United Kingdom", "Germany", "Italy", "Japan", "UAE", "Singapore", "Australia"].map(c => (
                           <option key={c}>{c}</option>
                         ))}
                       </select>
